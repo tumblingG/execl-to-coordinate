@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head>
+	<meta charset="utf-8">
+	<meta name="description" content="把Excel表格数据自动转化为百度坐标系">
+	<meta name="keywords" content="Excel、百度地图、百度坐标、BD09">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+	<title>（｡ò ∀ ó｡）</title>
+	<link rel="shortcut icon" href="http://lbsyun.baidu.com/skins/MySkin/resources/img/icon/lbsyunlogo_icon.ico">
+	<link href="https://cdn.bootcss.com/angular-ui-grid/4.0.0/ui-grid.min.css" rel="stylesheet">
+	<link href="https://cdn.bootcss.com/angular-toastr/2.1.1/angular-toastr.min.css" rel="stylesheet">
+	<link href="https://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+	<link href="libs/style.css" rel="stylesheet">
+</head>
+<body ng-controller="MainCtrl">
+	<div class="container-fluid">
+		<pre>
+			<h1>Excel转百度坐标系</h1>
+			<label>Excel表格需要三个字段：name(名称，必填),address(地址，必填),city(城市，可选)。</label>
+			<label>因为浏览器和百度接口限制，异步方式并发过高可能会导致掉包。</label>
+			<label><input type="radio" ng-model="method" value="sync"/>同步方式，稳定，适合处理大量数据。(推荐)</label>
+			<label><input type="radio" ng-model="method" value="async"/>异步方式，速度快，适合少量数据。</label>
+			<a>源码和教程</a>
+		</pre>
+
+		<div>
+			<form id="myform" name="myform">
+				<input type="file" import-sheet-js="" opts="gridOptions" multiple="false"  />
+				<button class="btn btn-success btn-sm" type="button" ng-click="getBDPosition()">转换</button>
+				<span >{{count}} / {{total}}</span>
+				<div class="btn-group pull-right">
+					<button class="btn btn-info btn-sm" type="button" ng-click="reset()">重置</button>
+					<button class="btn btn-warning btn-sm" type="button" ng-click="open()">添加</button>
+					<button class="btn btn-danger btn-sm" type="button" ng-click="delete()">删除</button>
+				</div>
+			</form>
+
+			<div id="grid1" class="grid" ui-grid="gridOptions" ui-grid-selection ui-grid-exporter ui-grid-edit ui-grid-auto-resize></div>
+			<button id="copy_btn" class="btn btn-info btn-sm" type="button" clipboard supported="supported" text="code" on-copied="copySuccess()" on-error="fail(err)">复制</button>
+			<pre id="code_text" ng-bind="code"></pre>
+		</div>
+	</div>
+</body>
+<script src="https://cdn.bootcss.com/jquery/2.2.2/jquery.min.js"></script>
+<!-- Angular -->
+<script src="https://cdn.bootcss.com/angular.js/1.6.6/angular.min.js"></script>
+<script src="https://cdn.bootcss.com/angular.js/1.6.6/angular-touch.min.js"></script>
+<script src="https://cdn.bootcss.com/angular.js/1.6.6/angular-animate.min.js"></script>
+<!--ui-grid-->
+<script src="https://cdn.bootcss.com/angular-ui-grid/4.0.0/ui-grid.min.js"></script>
+<!-- FileSaver shim for exporting files -->
+<script src="https://cdn.bootcss.com/es5-shim/4.4.2/es5-sham.min.js"></script>
+<script src="https://cdn.bootcss.com/FileSaver.js/1.3.3/FileSaver.min.js"></script>
+<!-- SheetJS js-xlsx library -->
+<script src="https://cdn.bootcss.com/xlsx/0.11.5/xlsx.full.min.js"></script>
+<!--<script src="https://cdn.bootcss.com/pdfmake/0.1.33/pdfmake.min.js"></script>-->
+<!--<script src="https://cdn.bootcss.com/pdfmake/0.1.33/vfs_fonts.js"></script>-->
+<script src="https://cdn.bootcss.com/angular-clipboard/1.6.2/angular-clipboard.min.js"></script>
+<script src="https://cdn.bootcss.com/angular-toastr/2.1.1/angular-toastr.tpls.min.js"></script>
+<script src="https://cdn.bootcss.com/angular-ui-bootstrap/2.5.0/ui-bootstrap-tpls.min.js"></script>
+<script src="http://api.map.baidu.com/api?v=2.0&ak=aLuq42PkQXpWkKTDCH9ZdxfR5as0Xoq3"></script>
+<!-- SheetJS Service -->
+<script src="libs/SheetJS-angular.js"></script>
+<script src="libs/app.js"></script>
+
+<!--modal template-->
+<script type="text/ng-template" id="myModalContent.html">
+	<div class="modal-header">
+		<button type="button" class="close" ng-click="$ctrl.cancel()">&times;</button>
+		<h3 class="modal-title" id="modal-title">添加数据</h3>
+	</div>
+	<div class="modal-body" id="modal-body">
+		<form name="addForm">
+			<div class="form-group">
+				<label for="name">name</label>
+				<input type="text" class="form-control" ng-model="$ctrl.modal.name" id="name" name="name" placeholder="请输入名称" required>
+				<span class="error" ng-show="$ctrl.submited&&addForm.name.$error.required">不能为空</span>
+			</div>
+			<div class="form-group">
+				<label for="address">address</label>
+				<input type="text" class="form-control" ng-model="$ctrl.modal.address" id="address" name="address" placeholder="请输入地址" required>
+				<span class="error" ng-show="$ctrl.submited&&addForm.address.$error.required">不能为空</span>
+			</div>
+			<div class="form-group">
+				<label for="city">city</label>
+				<input type="text" class="form-control" ng-model="$ctrl.modal.city" id="city" name="city" placeholder="请输入城市">
+			</div>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-primary" type="button" ng-click="$ctrl.ok(addForm)">OK</button>
+		<button class="btn btn-warning" type="button" ng-click="$ctrl.cancel()">Cancel</button>
+	</div>
+</script>
+</html>
+
