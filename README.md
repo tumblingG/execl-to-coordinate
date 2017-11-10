@@ -37,7 +37,7 @@
 
 ### 怎么使用
 ```javescript
-  git clone https://github.com/tumblingG/execl-to-coordinate.git
+git clone https://github.com/tumblingG/execl-to-coordinate.git
 ```
 直接打开`index.html`文件即可，推荐使用最新`google`浏览器。
 
