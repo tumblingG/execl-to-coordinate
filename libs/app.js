@@ -110,12 +110,12 @@ app.controller('MainCtrl', [
                             $scope.code = json;
                             var blob = new Blob([json], {type: "text/json;charset=utf-8"});
                             saveAs(blob, "map.json");
-                            $scope.$digest();
                         }else {
                             bgGEO();
                         }
                     }).catch(function(e) {
 						toastr.error('数据转换失败！');
+						console.log(e);
                     })
                 }
             }
@@ -132,7 +132,6 @@ app.controller('MainCtrl', [
 				}
 				deferred.resolve();
 				$scope.count++;
-				console.log($scope.count + " / " + $scope.total);
 			}, item.city);
 
 			return deferred.promise;
@@ -148,7 +147,7 @@ app.controller('MainCtrl', [
 
                 var deferred = $q.defer();
                 promiseArr.push(deferred.promise);
-                (function(deferred) {
+                (function(item, deferred) {
                     myGeo.getPoint(item.address, function(point){
                         if (point) {
                             positions[item.name] = [point.lng, point.lat];
@@ -157,9 +156,8 @@ app.controller('MainCtrl', [
                         }
                         deferred.resolve();
                         $scope.count++;
-                        console.log($scope.count + " / " + $scope.total);
                     }, item.city);
-                })(deferred)
+                })(item,deferred);
             }
 
             $q.all(promiseArr).then(function() {
@@ -168,10 +166,9 @@ app.controller('MainCtrl', [
                 $scope.code = json;
                 var blob = new Blob([json], {type: "text/json;charset=utf-8"});
                 saveAs(blob, "map.json");
-                $scope.$digest();
             }).catch(function(e) {
 				toastr.error('数据转换失败！');
-                console.log(e);
+				console.log(e);
             });
         }
 	};
