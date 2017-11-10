@@ -5,7 +5,7 @@ function SheetJSExportService(uiGridExporterService) {
 		var columns = uiGridExporterService.getColumnHeaders(gridApi.grid, 'all');
 		var data = uiGridExporterService.getData(gridApi.grid, 'all', 'all');
 
-		var fileName = gridApi.grid.options.filename || 'SheetJS';
+		var fileName = gridApi.grid.options.filename || 'Sheet';
 		fileName += wopts.bookType ? "." + wopts.bookType : '.xlsx';
 
 		var sheetName = gridApi.grid.options.sheetname || 'Sheet1';
@@ -25,7 +25,7 @@ function SheetJSExportService(uiGridExporterService) {
 	/* utilities */
 	function uigrid_to_sheet(data, columns) {
 		var o = [], oo = [], i = 0, j = 0;
-		/* column headers */
+		/* column headers*/
 		for(j = 0; j < columns.length; ++j) oo.push(get_value(columns[j]));
 		o.push(oo);
 
