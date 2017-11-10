@@ -44,15 +44,20 @@ app.controller('MainCtrl', [
 		enableGridMenu: true,
 		enableRowHeaderSelection : false,
 		enableSelectAll: false,
+        /*不导出id列*/
+        exporterSuppressColumns:[ 'id' ],
+        /*导出前转标题头为小写*/
+        exporterHeaderFilter: function(name) { return angular.lowercase(name);},
 		exporterMenuPdf: false,
 		exporterMenuCsv: true,
+        exporterCsvFilename: 'Sheet.csv',
 		showHeader: true,
 		onRegisterApi: function(gridApi){
 			$scope.gridApi = gridApi;
 		},
 		/* SheetJS Service setup */
-		filename: "SheetJSAngular",
-		sheetname: "ng-SheetJS",
+		filename: "Sheet",
+		sheetname: "Sheet1",
 		gridMenuCustomItems: [
 			{
 				title: 'Export all data as XLSX',
